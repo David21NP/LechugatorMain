@@ -31,12 +31,18 @@ Lechugator::TimerEncoders timerEncoders;
 Lechugator::LedsRGB ledsR(LED_RIGHT_RED, LED_RIGHT_GREEN, LED_RIGHT_BLUE);
 Lechugator::LedsRGB ledsL(LED_LEFT_RED, LED_LEFT_GREEN, LED_LEFT_BLUE);
 
+std::array<double, 4> velocidad_motores = {0, 0, 0, 0};
+uint32_t delay_motores = 1 * 1000;
+// std::array<double, 4> velocidad_motores;
 
 // Comunicacion
 char estado;
 
 void setup()
 {
+  velocidad_motores.fill(0.09375 * 2);
+  // velocidad_motores.fill(1.7647);
+
   Serial.begin(115200);
   Serial1.begin(115200);
   while (!Serial)
@@ -60,8 +66,12 @@ void setup()
   Serial.println();
   Serial.println();
 
-  // ledsR.prenderAzulClaro();
-  // ledsL.prenderAzulClaro();
+  ledsR.prenderAzulClaro();
+  ledsL.prenderAzulClaro();
+
+  Polyfill::pinMode(STM_COM_INPUT, INPUT_PULLDOWN);
+  Polyfill::pinMode(STM_COM_OUTPUT, OUTPUT);
+  digitalWriteFast(STM_COM_OUTPUT, LOW);
 }
 
 void loop()
@@ -73,6 +83,10 @@ void loop()
   if (Serial1.available())
   {
     estado = Serial1.read();
+  }
+  if (digitalReadFast(STM_COM_INPUT))
+  {
+    estado = 'g';
   }
 
   switch (estado)
@@ -194,25 +208,39 @@ void loop()
     // motors.at(3).moveRpm(50);
     motors.at(3).moveW(15);
     break;
+  case 'g':
+    // Serial.println("Control M4 50 RPM");
+    // Serial1.println("Mov 30 cm ");
+    estado = 0;
+    // motors.at(3).moveRpm(50);
+    ledsR.prenderRojo();
+    ledsL.prenderRojo();
+    for (size_t i = 0; i < motors.size(); i++)
+    {
+      motors.at(i).moveW(velocidad_motores.at(i));
+    }
+    while (
+        motors.at(0).getEncoder().getW() < velocidad_motores.at(0) &&
+        motors.at(1).getEncoder().getW() < velocidad_motores.at(1) &&
+        motors.at(2).getEncoder().getW() < velocidad_motores.at(2) &&
+        motors.at(3).getEncoder().getW() < velocidad_motores.at(3))
+      ;
+    delay(delay_motores);
+    for (auto &&motor : motors)
+    {
+      motor.moveW(0);
+    }
+    ledsR.prenderVerde();
+    ledsL.prenderVerde();
+
+    digitalWriteFast(STM_COM_OUTPUT, HIGH);
+    delay(1000);
+    digitalWriteFast(STM_COM_OUTPUT, LOW);
+    break;
   default:
     // Serial.println("nada");
     // Serial1.println("nada");
     estado = 0;
     break;
   }
-
-  // Serial.println(conteo);
-
-  // Serial.print(0);
-  // Serial.print(" ");
-  // Serial.print(moveStep);
-  // Serial.print(" ");
-  // Serial.print(motors.at(3).getPIDController().getControlSignal());
-  // Serial.print(" ");
-  // Serial.print(motors.at(3).getDir() * motors.at(3).getEncoder().getW());
-  // Serial.print(" ");
-  // Serial.print(motors.at(3).getPIDController().getDesiredValue());
-  // Serial.print(" ");
-  // Serial.print(motors.at(3).getEncoder().getW());
-  // Serial.println();
 }

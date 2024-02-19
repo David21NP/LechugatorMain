@@ -97,3 +97,15 @@
 #define LED_LEFT_RED PC_10
 #define LED_LEFT_GREEN PC_8
 #define LED_LEFT_BLUE PC_11
+
+
+// ? *************** LEDS ***************
+// Lechugator::LedsRGB ledsR(PC_5, PC_6, PC_7);
+// Lechugator::LedsRGB ledsL(PC_8, PC_9, PC_10);
+
+// ? *********** LED RIGHT ***********
+// ? ******* PINS
+#define STM_COM_INPUT PC_12
+#define STM_COM_OUTPUT PC_1
+
+
